@@ -108,10 +108,3 @@ The system automatically detects rules that negate or overlap with one another b
 - **Partially Shadowed Rules**: Rules that are partially overridden (for example, specific ports are blocked by a higher rule, but other ports are allowed) will display a yellow warning `!` icon.
 - **Tooltip Inspector**: Hover your mouse over the warning icon to see exactly which higher-priority rule is causing the conflict.
 
----
-
-## 8. Exporting the Topology
-
-You can export your current network architecture and rule set at any time. Look for the **Export** menu in the top right corner next to your Chart Tabs. 
-- **Export to SVG**: Downloads a high-resolution, scalable vector graphics file of your exact canvas view.
-- **Export to CSV / XLSX**: Downloads structured spreadsheet lists of all Nodes and Rules across your environment for auditing.
