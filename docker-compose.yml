@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: network-flow-visualizer
+    ports:
+      - "3000:3000"
+    volumes:
+      - sqlite_data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - NODE_ENV=production
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
