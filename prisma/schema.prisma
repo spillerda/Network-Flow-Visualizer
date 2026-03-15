@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Chart {
+  id          String   @id @default(cuid())
+  name        String   @default("Untitled")
+  viewState   String?  // JSON string containing zonePositions, zoneSizes, hiddenNodes, showAutoFlow
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Zone {
+  id          String    @id @default(cuid())
+  name        String
+  color       String?   // Background color as hex e.g. "#EFF6FF"
+  borderColor String?   // Border color as hex e.g. "#3B82F6"
+  description String?
+  networks    Network[]
+
+  // Rules targeting this zone specifically
+  sourceRules RuleSource[] @relation("SourceZone")
+  destRules   RuleDest[]   @relation("DestZone")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Network {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "Vlan 1 Management"
+  description String?
+  cidr        String?  // e.g. "10.0.1.0/24"
+  color           String?  // Background color as hex e.g. "#F9A8D4"
+  clientIsolation Boolean  @default(false)
+  zoneId          String
+  zone            Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  clients         Client[]
+
+  // Rules targeting this network specifically
+  sourceRules RuleSource[] @relation("SourceNetwork")
+  destRules   RuleDest[]   @relation("DestNetwork")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "Proxmox Server"
+  description String?
+  ip          String?
+  color       String?  // Background color as hex e.g. "#BFDBFE"
+  networkId   String
+  network     Network  @relation(fields: [networkId], references: [id], onDelete: Cascade)
+
+  // Rules targeting this client specifically
+  sourceRules RuleSource[] @relation("SourceClient")
+  destRules   RuleDest[]   @relation("DestClient")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rule {
+  id          String  @id @default(cuid())
+  description String? 
+  ports       String? // e.g. "80, 443" or "any"
+  action      String  @default("ALLOW") // "ALLOW" or "BLOCK"
+  priority    Int     @default(100) // Lower number = higher priority
+  active      Boolean @default(true)
+
+  sources      RuleSource[]
+  destinations RuleDest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RuleSource {
+  id        String  @id @default(cuid())
+  ruleId    String
+  rule      Rule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  
+  // Can reference a Zone, Network, or Client
+  zoneId    String?
+  networkId String?
+  clientId  String?
+  
+  cidr      String? // e.g. "192.168.0.0/16" when targeting a Zone
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // For Prisma referencing back (optional but good for referential integrity if we added relations on Zone/Network/Client, 
+  // but to keep it simple, we can just store the IDs. However, let's keep the relations for Cascade deletes).
+  zone      Zone?    @relation("SourceZone", fields: [zoneId], references: [id], onDelete: Cascade)
+  network   Network? @relation("SourceNetwork", fields: [networkId], references: [id], onDelete: Cascade)
+  client    Client?  @relation("SourceClient", fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model RuleDest {
+  id        String  @id @default(cuid())
+  ruleId    String
+  rule      Rule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  
+  // Can reference a Zone, Network, or Client
+  zoneId    String?
+  networkId String?
+  clientId  String?
+
+  cidr      String? // e.g. "192.168.0.0/16" when targeting a Zone
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zone      Zone?    @relation("DestZone", fields: [zoneId], references: [id], onDelete: Cascade)
+  network   Network? @relation("DestNetwork", fields: [networkId], references: [id], onDelete: Cascade)
+  client    Client?  @relation("DestClient", fields: [clientId], references: [id], onDelete: Cascade)
+}
