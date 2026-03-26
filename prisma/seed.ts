@@ -2,6 +2,13 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
+  // Check if database is already seeded
+  const zoneCount = await prisma.zone.count()
+  if (zoneCount > 0) {
+    console.log('Database already seeded, skipping seed script...')
+    return
+  }
+
   // Clear existing data to avoid duplicates on re-seed
   await prisma.rule.deleteMany()
   await prisma.client.deleteMany()
